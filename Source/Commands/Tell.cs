@@ -14,7 +14,7 @@ namespace Assbot.Commands
 			}
 		}
 
-		private Dictionary<string, List<TellRecord>> tellRecords;
+		private readonly Dictionary<string, List<TellRecord>> tellRecords;
 
 		public Tell(Bot parent)
 			: base(parent)
@@ -60,8 +60,8 @@ namespace Assbot.Commands
 
 		private struct TellRecord
 		{
-			public string Username;
-			public string Message;
+			public readonly string Username;
+			public readonly string Message;
 
 			public TellRecord(string username, string message)
 			{
