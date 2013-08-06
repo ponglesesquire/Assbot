@@ -38,6 +38,7 @@
     <Compile Include="Command.cs" />
     <Compile Include="Commands\Seen.cs" />
     <Compile Include="Commands\Source.cs" />
+    <Compile Include="Commands\Tell.cs" />
     <Compile Include="Commands\UrlTitle.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -24,12 +24,21 @@ namespace Assbot.Commands
 
 		public override void HandleDirect(List<string> args, string username)
 		{
-			string lookingFor = args.First();
+			if (args.Count < 1)
+			{
+				Parent.SendChannelMessage("!seen <username>");
+				return;
+			}
+
+			string lookingFor = args.First().ToLower();
 
 			if (lastSeen.ContainsKey(lookingFor))
 			{
 				LastSeenRecord lastSeenRecord = lastSeen[lookingFor];
-				Parent.SendChannelMessage("{0} last seen saying \"{1}\" at {2}.", lookingFor, lastSeenRecord.Message, lastSeenRecord.Time.ToString("MMM d hh:mm tt"));
+				string lastTime = lastSeenRecord.Time.ToString("MMM d hh:mm tt");
+
+				Parent.SendChannelMessage("{0} last seen saying \"{1}\" at {2}.",
+					lastSeenRecord.Username, lastSeenRecord.Message, lastTime);
 			}
 			else
 				Parent.SendChannelMessage("I've never seen {0} before.", lookingFor);
@@ -39,7 +48,8 @@ namespace Assbot.Commands
 
 		public override void HandlePassive(string message, string username)
 		{
-			LastSeenRecord record = new LastSeenRecord(message, DateTime.Now);
+			LastSeenRecord record = new LastSeenRecord(username, message, DateTime.Now);
+			username = username.ToLower();
 
 			if (lastSeen.ContainsKey(username))
 				lastSeen[username] = record;
@@ -49,13 +59,15 @@ namespace Assbot.Commands
 			base.HandlePassive(message, username);
 		}
 
-		public struct LastSeenRecord
+		private struct LastSeenRecord
 		{
-			public string Message;
+			public readonly string Username;
+			public readonly string Message;
 			public DateTime Time;
 
-			public LastSeenRecord(string message, DateTime time)
+			public LastSeenRecord(string username, string message, DateTime time)
 			{
+				Username = username;
 				Message = message;
 				Time = time;
 			}
