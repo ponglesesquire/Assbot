@@ -1,4 +1,6 @@
-﻿namespace Assbot.Commands
+﻿using System.Collections.Generic;
+
+namespace Assbot.Commands
 {
 	public class Source : Command
 	{
@@ -16,9 +18,10 @@
 
 		}
 
-		public override void Execute()
+		public override void Execute(List<string> args)
 		{
 			Parent.SendChannelMessage("https://github.com/Rixlet/Assbot");
+			base.Execute(args);
 		}
 	}
 }

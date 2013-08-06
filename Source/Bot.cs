@@ -48,7 +48,6 @@ namespace Assbot
 				IrcClient localClient = (IrcClient)sender;
 
 				localClient.LocalUser.NoticeReceived += (o, eventArgs) => Console.WriteLine(eventArgs.Text);
-				localClient.LocalUser.MessageReceived += (o, eventArgs) => HandleCommand(eventArgs);
 				localClient.LocalUser.JoinedChannel += (o, eventArgs) =>
 				{
 					IrcChannel channel = localClient.Channels.FirstOrDefault();
@@ -102,31 +101,27 @@ namespace Assbot
 
 		private void HandleMessage(object sender, IrcMessageEventArgs e)
 		{
-			string message = e.Text;
+			string message = Regex.Replace(e.Text, @"[^\u0020-\u007F]", String.Empty);
 
 			if (message.First() == Configuration.CommandDelimiter)
-				HandleCommand(e);
-		}
-
-		private void HandleCommand(IrcMessageEventArgs e)
-		{
-			string message = Regex.Replace(e.Text, @"[^\u0020-\u007F]", String.Empty);
-			string[] tokens = message.Remove(0, 1).Split(new[] { ' ' });
-
-			if (tokens.Length == 0)
 			{
-				SendChannelMessage("What the fuck bro?");
-				return;
-			}
+				message = message.Remove(0, 1);
+				List<string> tokens = new List<string>(message.Split(new[] { ' ' }));
 
-			Command command = commands.SingleOrDefault(c => c.Prefix == tokens[0]);
-			if (command == null)
+				Command command = commands.SingleOrDefault(c => c.Prefix == tokens[0]);
+				if (command == null)
+					return;
+
+				tokens.RemoveAt(0);
+				command.Execute(tokens);
+			}
+			else
 			{
-				SendChannelMessage("What the fuck are you trying to do?");
-				return;
-			}
+				List<string> tokens = new List<string>(message.Split(new[] { ' ' }));
 
-			command.Execute();
+				foreach(Command command in commands.Where(c => String.IsNullOrEmpty(c.Prefix)))
+					command.Execute(tokens);
+			}
 		}
 
 		public void SendChannelMessage(string value, params object[] args)

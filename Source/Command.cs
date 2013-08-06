@@ -22,7 +22,7 @@ namespace Assbot
 			Parent = parent;
 		}
 
-		public virtual void Execute()
+		public virtual void Execute(List<string> args)
 		{
 
 		}

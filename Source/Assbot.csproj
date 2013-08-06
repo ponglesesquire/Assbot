@@ -37,6 +37,7 @@
     <Compile Include="Bot.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="Commands\Source.cs" />
+    <Compile Include="Commands\UrlTitle.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />

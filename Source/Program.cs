@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Assbot
+﻿namespace Assbot
 {
 	public class Program
 	{
