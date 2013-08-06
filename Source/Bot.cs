@@ -24,14 +24,11 @@ namespace Assbot
 			}
 		}
 
-		private List<Command> commands; 
+		private readonly List<Command> commands; 
 
 		public Bot()
 		{
-			commands = new List<Command>
-			{
-				new Commands.Source(this)
-			};
+			commands = Command.GetCommands(this);
 
 			client = new IrcClient
 			{

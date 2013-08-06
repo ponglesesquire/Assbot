@@ -1,6 +1,6 @@
 ﻿namespace Assbot.Commands
 {
-	class Source : Command
+	public class Source : Command
 	{
 		public override string Prefix
 		{

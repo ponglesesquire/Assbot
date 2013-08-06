@@ -1,4 +1,9 @@
-﻿namespace Assbot
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+
+namespace Assbot
 {
 	public abstract class Command
 	{
@@ -20,6 +25,14 @@
 		public virtual void Execute()
 		{
 
+		}
+
+		public static List<Command> GetCommands(Bot parent)
+		{
+			Assembly assembly = Assembly.GetCallingAssembly();
+			IEnumerable<Type> types = assembly.GetExportedTypes().Where(type => type.IsSubclassOf(typeof(Command)));
+
+			return types.Select(type => (Command)Activator.CreateInstance(type, parent)).ToList();
 		}
 	}
 }
