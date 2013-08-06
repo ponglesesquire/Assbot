@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -7,7 +8,7 @@ using IrcDotNet;
 
 namespace Assbot
 {
-	class Bot
+	public class Bot
 	{
 		private readonly IrcClient client;
 		private IrcUserRegistrationInfo RegistrationInfo
@@ -23,8 +24,15 @@ namespace Assbot
 			}
 		}
 
+		private List<Command> commands; 
+
 		public Bot()
 		{
+			commands = new List<Command>
+			{
+				new Commands.Source(this)
+			};
+
 			client = new IrcClient
 			{
 				FloodPreventer = new IrcStandardFloodPreventer(4, 2000)
@@ -114,9 +122,17 @@ namespace Assbot
 				return;
 			}
 
+			Command command = commands.SingleOrDefault(c => c.Prefix == tokens[0]);
+			if (command == null)
+			{
+				SendChannelMessage("What the fuck are you trying to do?");
+				return;
+			}
+
+			command.Execute();
 		}
 
-		private void SendChannelMessage(string value, params object[] args)
+		public void SendChannelMessage(string value, params object[] args)
 		{
 			if (value.Count(c => c == '{') != value.Count(c => c == '}'))
 				return;
