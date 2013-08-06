@@ -18,10 +18,9 @@ namespace Assbot.Commands
 
 		}
 
-		public override void Execute(List<string> args)
+		public override void HandleDirect(List<string> args, string username)
 		{
 			Parent.SendChannelMessage("https://github.com/Rixlet/Assbot");
-			base.Execute(args);
 		}
 	}
 }

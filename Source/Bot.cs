@@ -103,6 +103,7 @@ namespace Assbot
 		{
 			string message = Regex.Replace(e.Text, @"[^\u0020-\u007F]", String.Empty);
 
+			// Direct commands
 			if (message.First() == Configuration.CommandDelimiter)
 			{
 				message = message.Remove(0, 1);
@@ -113,22 +114,16 @@ namespace Assbot
 					return;
 
 				tokens.RemoveAt(0);
-				command.Execute(tokens);
+				command.HandleDirect(tokens, e.Source.Name);
 			}
-			else
-			{
-				List<string> tokens = new List<string>(message.Split(new[] { ' ' }));
 
-				foreach(Command command in commands.Where(c => String.IsNullOrEmpty(c.Prefix)))
-					command.Execute(tokens);
-			}
+			// Passive commands
+			foreach (Command command in commands)
+				command.HandlePassive(message, e.Source.Name);
 		}
 
 		public void SendChannelMessage(string value, params object[] args)
 		{
-			if (value.Count(c => c == '{') != value.Count(c => c == '}'))
-				return;
-
 			client.LocalUser.SendMessage(Configuration.Channel, String.Format(value, args));
 		}
 	}

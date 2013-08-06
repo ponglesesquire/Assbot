@@ -22,9 +22,14 @@ namespace Assbot
 			Parent = parent;
 		}
 
-		public virtual void Execute(List<string> args)
+		public virtual void HandleDirect(List<string> args, string username)
 		{
 
+		}
+
+		public virtual void HandlePassive(string message, string username)
+		{
+			
 		}
 
 		public static List<Command> GetCommands(Bot parent)
