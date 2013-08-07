@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Threading;
 
 namespace Assbot
@@ -7,6 +8,9 @@ namespace Assbot
 	{
 		public static void Main(string[] args)
 		{
+			Assembly assembly = Assembly.GetExecutingAssembly();
+			Console.WriteLine("Assbot v{0}", assembly.GetName().Version);
+
 			Bot bot = new Bot();
 
 			Thread botThread = new Thread(
@@ -48,6 +52,7 @@ namespace Assbot
 					case "quit":
 						Console.WriteLine("Shutting down...");
 						bot.Quit("Shutdown from console.");
+
 						while(botThread.IsAlive)
 							Thread.Sleep(1);
 						break;
