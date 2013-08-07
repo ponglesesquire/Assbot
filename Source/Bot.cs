@@ -10,8 +10,18 @@ namespace Assbot
 {
 	public class Bot
 	{
+		public bool IsRunning
+		{
+			get
+			{
+				return client.IsConnected;
+			}
+		}
+
+		public bool IsInChannel { get; private set; }
+
 		private readonly IrcClient client;
-		private IrcUserRegistrationInfo RegistrationInfo
+		private static IrcUserRegistrationInfo RegistrationInfo
 		{
 			get
 			{
@@ -28,6 +38,7 @@ namespace Assbot
 
 		public Bot()
 		{
+			IsInChannel = false;
 			commands = Command.GetCommands(this);
 
 			client = new IrcClient
@@ -39,8 +50,8 @@ namespace Assbot
 			client.Disconnected += (sender, args) =>
 			{
 				// Reconnect
-				Connect();
-				JoinChannel();
+				Connect(Configuration.Server);
+				JoinChannel(Configuration.Channel);
 			};
 
 			client.Registered += (sender, args) =>
@@ -57,35 +68,24 @@ namespace Assbot
 					Console.WriteLine("Joined channel!");
 
 					channel.MessageReceived += HandleMessage;
+
+					IsInChannel = true;
 				};
 
 				Console.WriteLine("Registered!");
 			};
 		}
 
-		public void Run()
+		public bool Connect(string server)
 		{
-			Connect();
-			JoinChannel();
-
-			while (client.IsConnected)
-				Thread.Sleep(1);
-		}
-
-		private void Connect()
-		{
-			// Connect to channel
 			ManualResetEventSlim connectedEvent = new ManualResetEventSlim(false);
 			client.Connected += (sender, e) => connectedEvent.Set();
-			client.Connect(Configuration.Server, false, RegistrationInfo);
+			client.Connect(server, false, RegistrationInfo);
 
-			if (connectedEvent.Wait(10000))
-				return;
-
-			throw new Exception("Cannot connect to server!");
+			return connectedEvent.Wait(10000);
 		}
 
-		private void JoinChannel()
+		public bool JoinChannel(string channel)
 		{
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
@@ -94,9 +94,18 @@ namespace Assbot
 				Thread.Sleep(1);
 
 			if (stopwatch.ElapsedMilliseconds >= 8000)
-				throw new Exception("Didn't register in time");
+				return false;
 
-			client.Channels.Join(Configuration.Channel);
+			client.Channels.Join(channel);
+
+			return true;
+		}
+
+		public void Quit(string message)
+		{
+			SendChannelMessage(message);
+			client.Channels.Leave(Configuration.Channel, "Leaving");
+			client.Quit();
 		}
 
 		private void HandleMessage(object sender, IrcMessageEventArgs e)
