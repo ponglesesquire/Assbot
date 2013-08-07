@@ -82,6 +82,21 @@ namespace Assbot
 					Console.WriteLine("Joined channel!");
 
 					channel.MessageReceived += HandleMessage;
+					channel.UserJoined += (sender1, userEventArgs) =>
+					{
+						string joinMessage = String.Format("Used joined: {0}", userEventArgs.Comment ?? "No comment");
+
+						foreach (Command command in commands)
+							command.HandlePassive(joinMessage, userEventArgs.ChannelUser.User.NickName);
+					};
+
+					channel.UserLeft += (sender1, userEventArgs) =>
+					{
+						string leftMessage = String.Format("Used left: {0}", userEventArgs.Comment ?? "No comment");
+
+						foreach (Command command in commands)
+							command.HandlePassive(leftMessage, userEventArgs.ChannelUser.User.NickName);
+					};
 
 					IsInChannel = true;
 				};
