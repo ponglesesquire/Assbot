@@ -38,7 +38,7 @@ namespace Assbot
 
 			while(botThread.IsAlive)
 			{
-				if (!bot.IsInChannel)
+				if (!bot.IsInChannel || !bot.IsIdentified)
 				{
 					Thread.Sleep(1);
 					continue;
