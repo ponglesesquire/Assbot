@@ -47,7 +47,7 @@ namespace Assbot.Commands
 
 		public override void HandlePassive(string message, string username)
 		{
-			if (!tellRecords.ContainsKey(username))
+			if (message.StartsWith("Used left") || !tellRecords.ContainsKey(username))
 				return;
 
 			foreach(TellRecord record in tellRecords[username])
