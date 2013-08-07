@@ -19,6 +19,7 @@ namespace Assbot
 		}
 
 		public bool IsInChannel { get; private set; }
+		public bool IsIdentified { get; private set; }
 
 		private readonly IrcClient client;
 		private static IrcUserRegistrationInfo RegistrationInfo
@@ -38,8 +39,9 @@ namespace Assbot
 
 		public Bot()
 		{
-			IsInChannel = false;
 			commands = Command.GetCommands(this);
+			IsInChannel = false;
+			IsIdentified = false;
 
 			client = new IrcClient
 			{
@@ -58,7 +60,19 @@ namespace Assbot
 			{
 				IrcClient localClient = (IrcClient)sender;
 
-				localClient.LocalUser.NoticeReceived += (o, eventArgs) => Console.WriteLine(eventArgs.Text);
+				// Identify with server
+				client.SendRawMessage(String.Format("ns identify {0}", Configuration.Password));
+
+				localClient.LocalUser.NoticeReceived += (o, eventArgs) =>
+				{
+					if (eventArgs.Text.StartsWith("Password accepted"))
+						IsIdentified = true;
+
+					Console.ForegroundColor = ConsoleColor.Green;
+					Console.WriteLine(eventArgs.Text);
+					Console.ForegroundColor = ConsoleColor.Gray;
+				};
+
 				localClient.LocalUser.JoinedChannel += (o, eventArgs) =>
 				{
 					IrcChannel channel = localClient.Channels.FirstOrDefault();
