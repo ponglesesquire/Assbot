@@ -28,7 +28,7 @@ namespace Assbot.Commands
                 using (WebClient client = new WebClient())
                 {
                     client.Encoding = System.Text.Encoding.UTF8;
-                    string page = client.DownloadString("http" + message.Split(new string[] { "http" }, StringSplitOptions.None)[1].Split(new string[] { "http" }, StringSplitOptions.None)[0]);//message.Substring(message.IndexOf("http"), message.IndexOf(" ") - message.IndexOf("http")));
+                    string page = client.DownloadString("http" + message.Split(new string[] { "http" }, StringSplitOptions.None)[1].Split(' ')[0]);//message.Substring(message.IndexOf("http"), message.IndexOf(" ") - message.IndexOf("http")));
                     if (!page.Contains("<title>"))
                         return;
 
