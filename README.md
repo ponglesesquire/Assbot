@@ -1,0 +1,3 @@
+Assbot
+======
+Modular IRC bot.
