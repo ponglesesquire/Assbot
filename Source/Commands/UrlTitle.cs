@@ -14,7 +14,34 @@ namespace Assbot.Commands
 
 		}
 
-		public override void HandlePassive(string message, string username)
+        // 'Fixed' function to get links from anywhere in the message
+        public override void HandlePassive(string message, string username)
+        {
+            if (!new HashSet<string> { "http", "https", "www" }.Any(message.Contains))
+                return;
+
+            if (message.Contains("www"))
+                message = message.Insert(message.IndexOf("www"), "http://");
+
+            Thread thread = new Thread(() =>
+            {
+                using (WebClient client = new WebClient())
+                {
+                    string page = client.DownloadString("http" + message.Split(new string[] { "http" }, StringSplitOptions.None)[1].Split(new string[] { "http" }, StringSplitOptions.None)[0]);//message.Substring(message.IndexOf("http"), message.IndexOf(" ") - message.IndexOf("http")));
+                    if (!page.Contains("<title>"))
+                        return;
+
+                    int titleIndex = page.IndexOf("<title>", StringComparison.Ordinal) + 7;
+                    int titleEndIndex = page.IndexOf("</title>", StringComparison.Ordinal);
+
+                    Parent.SendChannelMessage(page.Substring(titleIndex, titleEndIndex - titleIndex));
+                }
+            });
+
+            thread.Start();
+        }
+
+		/*public override void HandlePassive(string message, string username)
 		{
 			if (!new HashSet<string> { "http", "https", "www" }.Any(message.StartsWith))
 				return;
@@ -38,6 +65,6 @@ namespace Assbot.Commands
 			});
 
 			thread.Start();
-		}
+		}*/
 	}
 }
