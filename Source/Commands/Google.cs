@@ -5,17 +5,17 @@ using System.Threading;
 
 namespace Assbot.Commands
 {
-	public class Lucky : Command
+	public class Google : Command
 	{
 		public override string Prefix
 		{
 			get
 			{
-				return "lucky";
+				return "google";
 			}
 		}
 
-		public Lucky(Bot parent)
+		public Google(Bot parent)
 			: base(parent)
 		{
 
@@ -25,7 +25,7 @@ namespace Assbot.Commands
 		{
 			if (args.Count < 1)
 			{
-				Parent.SendChannelMessage("!lucky <query>");
+				Parent.SendChannelMessage("!{0} <query>", Prefix);
 				return;
 			}
 
