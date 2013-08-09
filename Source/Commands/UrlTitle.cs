@@ -35,7 +35,7 @@ namespace Assbot.Commands
                     int titleIndex = page.IndexOf("<title>", StringComparison.Ordinal) + 7;
                     int titleEndIndex = page.IndexOf("</title>", StringComparison.Ordinal);
 
-                    Parent.SendChannelMessage(page.Substring(titleIndex, titleEndIndex - titleIndex));
+                    Parent.SendChannelMessage(WebUtility.HtmlDecode(page.Substring(titleIndex, titleEndIndex - titleIndex)));
                 }
             });
 
