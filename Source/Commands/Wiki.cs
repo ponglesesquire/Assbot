@@ -7,6 +7,8 @@ namespace Assbot.Commands
 {
 	public class Wiki : Command
 	{
+		private const string Url = "http://www.wikipedia.org/search-redirect.php?family=wikipedia&search={0}&language=en&go=Go";
+
 		public override string Prefix
 		{
 			get
@@ -25,13 +27,20 @@ namespace Assbot.Commands
 		{
 			Thread wikiThread = new Thread(() =>
 			{
-				string query = Uri.EscapeUriString(String.Join(" ", args));
-				string uri =
-					String.Format("http://www.wikipedia.org/search-redirect.php?family=wikipedia&search={0}&language=en&go=Go", query);
+				try
+				{
+					string query = Uri.EscapeUriString(String.Join(" ", args));
+					string uri = String.Format(Url, query);
 
-				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
+					HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
 
-				Parent.SendChannelMessage(request.GetResponse().ResponseUri.AbsoluteUri);
+					Parent.SendChannelMessage(request.GetResponse().ResponseUri.AbsoluteUri);
+				}
+				catch (Exception)
+				{
+					Parent.SendChannelMessage("Something went wrong, I couldn't wiki that for you {0}.", username);
+				}
+
 				base.HandleDirect(args, username);
 			});
 

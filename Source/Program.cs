@@ -8,6 +8,10 @@ namespace Assbot
 	{
 		public static void Main(string[] args)
 		{
+#if !DEBUG
+			AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) => Console.WriteLine(eventArgs.ExceptionObject);
+#endif
+
 			Assembly assembly = Assembly.GetExecutingAssembly();
 			Console.WriteLine("Assbot v{0}", assembly.GetName().Version);
 
