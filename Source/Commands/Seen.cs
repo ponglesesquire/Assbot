@@ -42,8 +42,6 @@ namespace Assbot.Commands
 			}
 			else
 				Parent.SendChannelMessage("I've never seen {0} before.", lookingFor);
-
-			base.HandleDirect(args, username);
 		}
 
 		public override void HandlePassive(string message, string username)
@@ -55,8 +53,6 @@ namespace Assbot.Commands
 				lastSeen[username] = record;
 			else
 				lastSeen.Add(username, record);
-
-			base.HandlePassive(message, username);
 		}
 
 		private struct LastSeenRecord

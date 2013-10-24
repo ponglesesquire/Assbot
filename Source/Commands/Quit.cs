@@ -33,8 +33,6 @@ namespace Assbot.Commands
 			}
 
 			Parent.Quit("I'm out.");
-
-			base.HandleDirect(args, username);
 		}
 	}
 }

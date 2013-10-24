@@ -48,8 +48,6 @@ namespace Assbot.Commands
 			});
 
 			ytThread.Start();
-
-			base.HandleDirect(args, username);
 		}
 	}
 }

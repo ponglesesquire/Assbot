@@ -23,8 +23,6 @@ namespace Assbot.Commands
 		{
 			Assembly assembly = Assembly.GetExecutingAssembly();
 			Parent.SendChannelMessage("Assbot v{0}", assembly.GetName().Version);
-
-			base.HandleDirect(args, username);
 		}
 	}
 }

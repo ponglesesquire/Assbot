@@ -41,8 +41,6 @@ namespace Assbot.Commands
 				tellRecords.Add(toUsername, new List<TellRecord> { record });
 
 			Parent.SendChannelMessage("{0} will be told next time they say something.", toUsername);
-
-			base.HandleDirect(args, username);
 		}
 
 		public override void HandlePassive(string message, string username)
@@ -54,8 +52,6 @@ namespace Assbot.Commands
 				Parent.SendChannelMessage("{0}, {1} had a message for you, \"{2}\".", username, record.Username, record.Message);
 
 			tellRecords[username].Clear();
-
-			base.HandlePassive(message, username);
 		}
 
 		private struct TellRecord

@@ -162,7 +162,44 @@ namespace Assbot
 
 		public void SendChannelMessage(string value, params object[] args)
 		{
-			client.LocalUser.SendMessage(Configuration.Channel, String.Format(value, args));
+			try
+			{
+				for (int i = 0; i < value.Length; ++i)
+				{
+					switch(value[i])
+					{
+						case '{':
+						{
+							int tokenPosition = i++;
+							for(; i < value.Length; ++i)
+							{
+								if (value[i] == '}')
+								{
+									tokenPosition = -1;
+									break;
+								}
+
+								if (!char.IsDigit(value[i]))
+									break;
+							}
+
+							if (tokenPosition != -1)
+								value = value.Insert(i++, "{");
+						}
+						break;
+						
+						case '}':
+							value = value.Insert(i++, "}");
+							break;
+					}
+				}
+
+				client.LocalUser.SendMessage(Configuration.Channel, String.Format(value, args));
+			}
+			catch(Exception e)
+			{
+				Console.WriteLine(e);
+			}
 		}
 	}
 }

@@ -30,8 +30,6 @@ namespace Assbot.Commands
 				commands.AppendFormat("{0}, ", command.Prefix);
 
 			Parent.SendChannelMessage(commands.ToString(0, commands.Length - 2));
-
-			base.HandleDirect(args, username);
 		}
 	}
 }

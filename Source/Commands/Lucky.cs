@@ -40,8 +40,6 @@ namespace Assbot.Commands
 			});
 
 			thread.Start();
-
-			base.HandleDirect(args, username);
 		}
 	}
 }

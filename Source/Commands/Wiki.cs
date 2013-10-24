@@ -40,11 +40,14 @@ namespace Assbot.Commands
 				{
 					Parent.SendChannelMessage("Something went wrong, I couldn't wiki that for you {0}.", username);
 				}
-
-				base.HandleDirect(args, username);
 			});
 
 			wikiThread.Start();
+		}
+
+		public override void HandlePassive(string message, string username)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }
