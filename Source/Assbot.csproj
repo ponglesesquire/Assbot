@@ -45,6 +45,7 @@
     <Compile Include="Commands\Seen.cs" />
     <Compile Include="Commands\Source.cs" />
     <Compile Include="Commands\Tell.cs" />
+    <Compile Include="Commands\UpTime.cs" />
     <Compile Include="Commands\UrlTitle.cs" />
     <Compile Include="Commands\Version.cs" />
     <Compile Include="Commands\Wiki.cs" />

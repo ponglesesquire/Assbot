@@ -132,9 +132,20 @@ namespace Assbot
 
 		public void Quit(string message)
 		{
+			Shutdown();
+
 			SendChannelMessage(message);
 			client.Channels.Leave(Configuration.Channel, "Leaving");
 			client.Quit();
+		}
+
+		public void Shutdown()
+		{
+			foreach (Command command in commands)
+				command.Shutdown();
+
+			// We do this so it's impossible to accidentally shutdown commands more than once
+			commands.Clear();
 		}
 
 		private void HandleMessage(object sender, IrcMessageEventArgs e)
@@ -164,36 +175,7 @@ namespace Assbot
 		{
 			try
 			{
-				for (int i = 0; i < value.Length; ++i)
-				{
-					switch(value[i])
-					{
-						case '{':
-						{
-							int tokenPosition = i++;
-							for(; i < value.Length; ++i)
-							{
-								if (value[i] == '}')
-								{
-									tokenPosition = -1;
-									break;
-								}
-
-								if (!char.IsDigit(value[i]))
-									break;
-							}
-
-							if (tokenPosition != -1)
-								value = value.Insert(i++, "{");
-						}
-						break;
-						
-						case '}':
-							value = value.Insert(i++, "}");
-							break;
-					}
-				}
-
+				value = Utility.SterilizeString(value);
 				client.LocalUser.SendMessage(Configuration.Channel, String.Format(value, args));
 			}
 			catch(Exception e)

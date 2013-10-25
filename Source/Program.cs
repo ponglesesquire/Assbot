@@ -18,25 +18,27 @@ namespace Assbot
 			Bot bot = new Bot();
 
 			Thread botThread = new Thread(
-			() =>
-			{
-				if (!bot.Connect(Configuration.Server))
+				() =>
 				{
-					Console.WriteLine("Cannot connect to {0}!", Configuration.Server);
-					Console.ReadKey();
-					return;
-				}
+					if (!bot.Connect(Configuration.Server))
+					{
+						Console.WriteLine("Cannot connect to {0}!", Configuration.Server);
+						Console.ReadKey();
+						return;
+					}
 
-				if (!bot.JoinChannel(Configuration.Channel))
-				{
-					Console.WriteLine("Cannot join channele {0}!", Configuration.Channel);
-					Console.ReadKey();
-					return;
-				}
+					if (!bot.JoinChannel(Configuration.Channel))
+					{
+						Console.WriteLine("Cannot join channele {0}!", Configuration.Channel);
+						Console.ReadKey();
+						return;
+					}
 
-				while (bot.IsRunning)
-					Thread.Sleep(1);
-			});
+					while(bot.IsRunning)
+						Thread.Sleep(1);
+
+					bot.Shutdown();
+				});
 
 			botThread.Start();
 

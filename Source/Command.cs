@@ -32,6 +32,11 @@ namespace Assbot
 			
 		}
 
+		public virtual void Shutdown()
+		{
+			
+		}
+
 		public static List<Command> GetCommands(Bot parent)
 		{
 			Assembly assembly = Assembly.GetCallingAssembly();
