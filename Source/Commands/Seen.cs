@@ -35,10 +35,10 @@ namespace Assbot.Commands
 			if (lastSeen.ContainsKey(lookingFor))
 			{
 				LastSeenRecord lastSeenRecord = lastSeen[lookingFor];
-				string lastTime = lastSeenRecord.Time.ToString("MMM d hh:mm tt");
+				TimeSpan time = DateTime.Now - lastSeenRecord.Time;
 
-				Parent.SendChannelMessage("{0} last seen saying \"{1}\" at {2}.",
-					lastSeenRecord.Username, lastSeenRecord.Message, lastTime);
+				Parent.SendChannelMessage("{0} last seen saying \"{1}\" {2} minutes ago.",
+					lastSeenRecord.Username, lastSeenRecord.Message, time.TotalMinutes);
 			}
 			else
 				Parent.SendChannelMessage("I've never seen {0} before.", lookingFor);
@@ -59,7 +59,7 @@ namespace Assbot.Commands
 		{
 			public readonly string Username;
 			public readonly string Message;
-			public DateTime Time;
+			public readonly DateTime Time;
 
 			public LastSeenRecord(string username, string message, DateTime time)
 			{
