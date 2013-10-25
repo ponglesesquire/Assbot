@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -10,6 +9,9 @@ namespace Assbot.Commands
 {
 	public class UrlTitle : Command
 	{
+		private const string UrlRegex = @"[((http|ftp|https)://|www)]([\w+?\.\w+])+([a-zA-Z0-9\~\!\@\#\$\%\^\&\*\(\)_\-\=\+\\\/\?\.\:\;\'\,]*)?";
+		private const string TitleRegex = @"<title>\s*(.+?)\s*</title>";
+
 		public UrlTitle(Bot parent)
 			: base(parent)
 		{
@@ -23,8 +25,9 @@ namespace Assbot.Commands
 
 			try
 			{
-				Regex urlRegex = new Regex(@"[((http|ftp|https)://|www)]([\w+?\.\w+])+([a-zA-Z0-9\~\!\@\#\$\%\^\&\*\(\)_\-\=\+\\\/\?\.\:\;\'\,]*)?");
-				var match = urlRegex.Match(message);
+				Match match = Regex.Match(message, UrlRegex);
+				if (!match.Success)
+					return;
 
 				message = match.Value;
 			}
@@ -41,13 +44,12 @@ namespace Assbot.Commands
 				using (WebClient client = new WebClient { Encoding = Encoding.UTF8 })
 				{
 					string page = WebUtility.HtmlDecode(client.DownloadString(message));
-					if (!page.Contains("<title>"))
+
+					Match match = Regex.Match(page, TitleRegex);
+					if (!match.Success)
 						return;
 
-					int titleIndex = page.IndexOf("<title>", StringComparison.Ordinal) + 7;
-					int titleEndIndex = page.IndexOf("</title>", StringComparison.Ordinal);
-
-					Parent.SendChannelMessage(page.Substring(titleIndex, titleEndIndex - titleIndex));
+					Parent.SendChannelMessage(match.Groups[1].Value);
 				}
 			});
 
