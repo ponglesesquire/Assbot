@@ -19,12 +19,12 @@ namespace Assbot.Commands
 			}
 		}
 
-		private readonly Dictionary<string, LastSeenRecord> lastSeen; 
+		private readonly Dictionary<string, LastSeenRecord> lastSeenRecords; 
 
 		public Seen(Bot parent)
 			: base(parent)
 		{
-			lastSeen = new Dictionary<string, LastSeenRecord>();
+			lastSeenRecords = new Dictionary<string, LastSeenRecord>();
 
 			try
 			{
@@ -51,9 +51,9 @@ namespace Assbot.Commands
 			string lookingForProper = args.First();
 			string lookingFor = lookingForProper.ToLower();
 
-			if (lastSeen.ContainsKey(lookingFor))
+			if (lastSeenRecords.ContainsKey(lookingFor))
 			{
-				LastSeenRecord lastSeenRecord = lastSeen[lookingFor];
+				LastSeenRecord lastSeenRecord = lastSeenRecords[lookingFor];
 				TimeSpan time = DateTime.Now - lastSeenRecord.Time;
 
 				Parent.SendChannelMessage("{0} last seen saying \"{1}\" {2} ago.",
@@ -68,10 +68,10 @@ namespace Assbot.Commands
 			LastSeenRecord record = new LastSeenRecord(message, DateTime.Now);
 			username = username.ToLower();
 
-			if (lastSeen.ContainsKey(username))
-				lastSeen[username] = record;
+			if (lastSeenRecords.ContainsKey(username))
+				lastSeenRecords[username] = record;
 			else
-				lastSeen.Add(username, record);
+				lastSeenRecords.Add(username, record);
 		}
 
 		public override void Shutdown()
@@ -82,7 +82,7 @@ namespace Assbot.Commands
 			}
 			catch (IOException)
 			{
-				Console.WriteLine("Cannot open history file \"{0}\" for writer.", HistoryFilename);
+				Console.WriteLine("Cannot open history file \"{0}\" for writing.", HistoryFilename);
 			}
 			catch (Exception)
 			{
@@ -116,7 +116,7 @@ namespace Assbot.Commands
 					string message = reader.ReadString();
 					DateTime dateTime = DateTime.FromBinary(reader.ReadInt64());
 
-					lastSeen.Add(username, new LastSeenRecord(message, dateTime));
+					lastSeenRecords.Add(username, new LastSeenRecord(message, dateTime));
 				}
 
 				Console.WriteLine("Success! Loaded {0} records.", count);
@@ -132,8 +132,8 @@ namespace Assbot.Commands
 				writer.Write(HistoryMagic);
 				writer.Write(HistoryVersion);
 
-				writer.Write(lastSeen.Count);
-				foreach(KeyValuePair<string, LastSeenRecord> record in lastSeen)
+				writer.Write(lastSeenRecords.Count);
+				foreach(var record in lastSeenRecords)
 				{
 					writer.Write(record.Key);
 					writer.Write(record.Value.Message);
