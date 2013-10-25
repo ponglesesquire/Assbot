@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 
 namespace Assbot.Commands
@@ -16,7 +17,7 @@ namespace Assbot.Commands
 
 		public override void HandlePassive(string message, string username)
 		{
-			if (!new HashSet<string> { "http", "https", "www" }.Any(message.StartsWith))
+			if (!new HashSet<string> { "http", "https", "www" }.Any(message.Contains))
 				return;
 
 			if (message.StartsWith("www"))
@@ -24,9 +25,9 @@ namespace Assbot.Commands
 
 			Thread thread = new Thread(() =>
 			{
-				using (WebClient client = new WebClient())
+				using (WebClient client = new WebClient { Encoding = Encoding.UTF8 })
 				{
-					string page = client.DownloadString(message);
+					string page = WebUtility.HtmlDecode(client.DownloadString(message));
 					if (!page.Contains("<title>"))
 						return;
 
