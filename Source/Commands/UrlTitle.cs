@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace Assbot.Commands
@@ -19,6 +20,18 @@ namespace Assbot.Commands
 		{
 			if (!new HashSet<string> { "http", "https", "www" }.Any(message.Contains))
 				return;
+
+			try
+			{
+				Regex urlRegex = new Regex(@"[((http|ftp|https)://|www)]([\w+?\.\w+])+([a-zA-Z0-9\~\!\@\#\$\%\^\&\*\(\)_\-\=\+\\\/\?\.\:\;\'\,]*)?");
+				var match = urlRegex.Match(message);
+
+				message = match.Value;
+			}
+			catch
+			{
+				return;
+			}
 
 			if (message.StartsWith("www"))
 				message = message.Insert(0, "http://");
