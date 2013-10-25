@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Assbot.Commands
 {
 	public class Tell : Command
 	{
+		private const string HistoryFilename = "tell.hst";
+		private const uint HistoryMagic = 0xA55B0702;
+		private const ushort HistoryVersion = 1;
+
 		public override string Prefix
 		{
 			get
@@ -20,6 +25,19 @@ namespace Assbot.Commands
 			: base(parent)
 		{
 			tellRecords = new Dictionary<string, List<TellRecord>>();
+
+			try
+			{
+				LoadHistory();
+			}
+			catch (IOException)
+			{
+				Console.WriteLine("Cannot open history file \"{0}\" for reading.", HistoryFilename);
+			}
+			catch (Exception)
+			{
+				Console.WriteLine("Some unknown error occurred.");
+			}
 		}
 
 		public override void HandleDirect(List<string> args, string username)
@@ -41,8 +59,6 @@ namespace Assbot.Commands
 				tellRecords.Add(toUsername, new List<TellRecord> { record });
 
 			Parent.SendChannelMessage("{0} will be told next time they say something.", toUsername);
-
-			base.HandleDirect(args, username);
 		}
 
 		public override void HandlePassive(string message, string username)
@@ -54,8 +70,88 @@ namespace Assbot.Commands
 				Parent.SendChannelMessage("{0}, {1} had a message for you, \"{2}\".", username, record.Username, record.Message);
 
 			tellRecords[username].Clear();
+		}
 
-			base.HandlePassive(message, username);
+		public override void Shutdown()
+		{
+			try
+			{
+				SaveHistory();
+			}
+			catch (IOException)
+			{
+				Console.WriteLine("Cannot open history file \"{0}\" for writing.", HistoryFilename);
+			}
+			catch (Exception)
+			{
+				Console.WriteLine("Some unknown error occurred.");
+			}
+		}
+
+		private void LoadHistory()
+		{
+			Console.Write("Loading tell history... ");
+			using(BinaryReader reader = new BinaryReader(new FileStream(HistoryFilename, FileMode.Open)))
+			{
+				if (reader.ReadUInt32() != HistoryMagic)
+				{
+					Console.WriteLine();
+					Console.WriteLine("Couldn't load tell history, this session will start with a fresh tell history.");
+					return;
+				}
+
+				if (reader.ReadUInt16() != HistoryVersion)
+				{
+					Console.WriteLine();
+					Console.WriteLine("Tell history file is outdated, this session will start with a fresh tell history.");
+					return;
+				}
+
+				int count = reader.ReadInt32();
+				for(int i = 0; i < count; ++i)
+				{
+					List<TellRecord> record = new List<TellRecord>();
+					string toUsername = reader.ReadString();
+
+					int subRecordCount = reader.ReadInt32();
+					for(int j = 0; j < subRecordCount; ++j)
+					{
+						string fromUsername = reader.ReadString();
+						string message = reader.ReadString();
+
+						record.Add(new TellRecord(fromUsername, message));
+					}
+
+					tellRecords.Add(toUsername, record);
+				}
+
+				Console.WriteLine("Success! Loaded {0} records.", count);
+			}
+		}
+
+		private void SaveHistory()
+		{
+			Console.Write("Saving tell history... ");
+			using(BinaryWriter writer = new BinaryWriter(new FileStream(HistoryFilename, FileMode.Create)))
+			{
+				writer.Write(HistoryMagic);
+				writer.Write(HistoryVersion);
+
+				writer.Write(tellRecords.Count);
+				foreach(var record in tellRecords)
+				{
+					writer.Write(record.Key);
+					
+					writer.Write(record.Value.Count);
+					foreach(var subRecord in record.Value)
+					{
+						writer.Write(subRecord.Username);
+						writer.Write(subRecord.Message);
+					}
+				}
+			}
+
+			Console.WriteLine("Done!");
 		}
 
 		private struct TellRecord

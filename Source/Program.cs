@@ -8,31 +8,37 @@ namespace Assbot
 	{
 		public static void Main(string[] args)
 		{
+#if !DEBUG
+			AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) => Console.WriteLine(eventArgs.ExceptionObject);
+#endif
+
 			Assembly assembly = Assembly.GetExecutingAssembly();
 			Console.WriteLine("Assbot v{0}", assembly.GetName().Version);
 
 			Bot bot = new Bot();
 
 			Thread botThread = new Thread(
-			() =>
-			{
-				if (!bot.Connect(Configuration.Server))
+				() =>
 				{
-					Console.WriteLine("Cannot connect to {0}!", Configuration.Server);
-					Console.ReadKey();
-					return;
-				}
+					if (!bot.Connect(Configuration.Server))
+					{
+						Console.WriteLine("Cannot connect to {0}!", Configuration.Server);
+						Console.ReadKey();
+						return;
+					}
 
-				if (!bot.JoinChannel(Configuration.Channel))
-				{
-					Console.WriteLine("Cannot join channele {0}!", Configuration.Channel);
-					Console.ReadKey();
-					return;
-				}
+					if (!bot.JoinChannel(Configuration.Channel))
+					{
+						Console.WriteLine("Cannot join channele {0}!", Configuration.Channel);
+						Console.ReadKey();
+						return;
+					}
 
-				while (bot.IsRunning)
-					Thread.Sleep(1);
-			});
+					while(bot.IsRunning)
+						Thread.Sleep(1);
+
+					bot.Shutdown();
+				});
 
 			botThread.Start();
 

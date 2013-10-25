@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Assbot
 {
@@ -29,6 +28,11 @@ namespace Assbot
 		}
 
 		public virtual void HandlePassive(string message, string username)
+		{
+			
+		}
+
+		public virtual void Shutdown()
 		{
 			
 		}

@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Assbot.Commands
 {
 	public class Seen : Command
 	{
+		private const string HistoryFilename = "seen.hst";
+		private const uint HistoryMagic = 0xA55B0701;
+		private const ushort HistoryVersion = 1;
+
 		public override string Prefix
 		{
 			get
@@ -14,12 +19,25 @@ namespace Assbot.Commands
 			}
 		}
 
-		private readonly Dictionary<string, LastSeenRecord> lastSeen; 
+		private readonly Dictionary<string, LastSeenRecord> lastSeenRecords; 
 
 		public Seen(Bot parent)
 			: base(parent)
 		{
-			lastSeen = new Dictionary<string, LastSeenRecord>();
+			lastSeenRecords = new Dictionary<string, LastSeenRecord>();
+
+			try
+			{
+				LoadHistory();
+			}
+			catch(IOException)
+			{
+				Console.WriteLine("Cannot open history file \"{0}\" for reading.", HistoryFilename);
+			}
+			catch(Exception)
+			{
+				Console.WriteLine("Some unknown error occurred.");
+			}
 		}
 
 		public override void HandleDirect(List<string> args, string username)
@@ -30,44 +48,109 @@ namespace Assbot.Commands
 				return;
 			}
 
-			string lookingFor = args.First().ToLower();
+			string lookingForProper = args.First();
+			string lookingFor = lookingForProper.ToLower();
 
-			if (lastSeen.ContainsKey(lookingFor))
+			if (lastSeenRecords.ContainsKey(lookingFor))
 			{
-				LastSeenRecord lastSeenRecord = lastSeen[lookingFor];
-				string lastTime = lastSeenRecord.Time.ToString("MMM d hh:mm tt");
+				LastSeenRecord lastSeenRecord = lastSeenRecords[lookingFor];
+				TimeSpan time = DateTime.Now - lastSeenRecord.Time;
 
-				Parent.SendChannelMessage("{0} last seen saying \"{1}\" at {2}.",
-					lastSeenRecord.Username, lastSeenRecord.Message, lastTime);
+				Parent.SendChannelMessage("{0} last seen saying \"{1}\" {2} ago.",
+					lookingForProper, lastSeenRecord.Message, Utility.PrettyTime(time));
 			}
 			else
 				Parent.SendChannelMessage("I've never seen {0} before.", lookingFor);
-
-			base.HandleDirect(args, username);
 		}
 
 		public override void HandlePassive(string message, string username)
 		{
-			LastSeenRecord record = new LastSeenRecord(username, message, DateTime.Now);
+			LastSeenRecord record = new LastSeenRecord(message, DateTime.Now);
 			username = username.ToLower();
 
-			if (lastSeen.ContainsKey(username))
-				lastSeen[username] = record;
+			if (lastSeenRecords.ContainsKey(username))
+				lastSeenRecords[username] = record;
 			else
-				lastSeen.Add(username, record);
+				lastSeenRecords.Add(username, record);
+		}
 
-			base.HandlePassive(message, username);
+		public override void Shutdown()
+		{
+			try
+			{
+				SaveHistory();
+			}
+			catch (IOException)
+			{
+				Console.WriteLine("Cannot open history file \"{0}\" for writing.", HistoryFilename);
+			}
+			catch (Exception)
+			{
+				Console.WriteLine("Some unknown error occurred.");
+			}
+		}
+
+		private void LoadHistory()
+		{
+			Console.Write("Loading seen history... ");
+			using (BinaryReader reader = new BinaryReader(new FileStream(HistoryFilename, FileMode.Open)))
+			{
+				if (reader.ReadUInt32() != HistoryMagic)
+				{
+					Console.WriteLine();
+					Console.WriteLine("Couldn't load seen history, this session will start with a fresh seen history.");
+					return;
+				}
+
+				if (reader.ReadUInt16() != HistoryVersion)
+				{
+					Console.WriteLine();
+					Console.WriteLine("Seen history file is outdated, this session will start with a fresh seen history.");
+					return;
+				}
+
+				int count = reader.ReadInt32();
+				for(int i = 0; i < count; ++i)
+				{
+					string username = reader.ReadString();
+					string message = reader.ReadString();
+					DateTime dateTime = DateTime.FromBinary(reader.ReadInt64());
+
+					lastSeenRecords.Add(username, new LastSeenRecord(message, dateTime));
+				}
+
+				Console.WriteLine("Success! Loaded {0} records.", count);
+			}
+		}
+
+		private void SaveHistory()
+		{
+			Console.Write("Saving history... ");
+
+			using(BinaryWriter writer = new BinaryWriter(new FileStream(HistoryFilename, FileMode.Create)))
+			{
+				writer.Write(HistoryMagic);
+				writer.Write(HistoryVersion);
+
+				writer.Write(lastSeenRecords.Count);
+				foreach(var record in lastSeenRecords)
+				{
+					writer.Write(record.Key);
+					writer.Write(record.Value.Message);
+					writer.Write(record.Value.Time.ToBinary());
+				}
+			}
+
+			Console.WriteLine("Done!");
 		}
 
 		private struct LastSeenRecord
 		{
-			public readonly string Username;
 			public readonly string Message;
-			public DateTime Time;
+			public readonly DateTime Time;
 
-			public LastSeenRecord(string username, string message, DateTime time)
+			public LastSeenRecord(string message, DateTime time)
 			{
-				Username = username;
 				Message = message;
 				Time = time;
 			}
