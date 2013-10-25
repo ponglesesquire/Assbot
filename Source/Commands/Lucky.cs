@@ -31,12 +31,18 @@ namespace Assbot.Commands
 
 			Thread thread = new Thread(() =>
 			{
-				string query = Uri.EscapeUriString(String.Join(" ", args));
-				string uri = String.Format("http://www.google.com/search?q={0}&btnI", query);
+				try
+				{
+					string query = Uri.EscapeUriString(String.Join(" ", args));
+					string uri = String.Format("http://www.google.com/search?q={0}&btnI", query);
 
-				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
-
-				Parent.SendChannelMessage(request.GetResponse().ResponseUri.AbsoluteUri);
+					HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
+					Parent.SendChannelMessage(request.GetResponse().ResponseUri.AbsoluteUri);
+				}
+				catch
+				{
+					Parent.SendChannelMessage("Something went wrong, sorry {0}.", username);
+				}
 			});
 
 			thread.Start();

@@ -44,10 +44,5 @@ namespace Assbot.Commands
 
 			wikiThread.Start();
 		}
-
-		public override void HandlePassive(string message, string username)
-		{
-			throw new NotImplementedException();
-		}
 	}
 }

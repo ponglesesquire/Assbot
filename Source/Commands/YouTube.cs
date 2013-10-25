@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Text;
 using System.Threading;
 
 namespace Assbot.Commands
@@ -35,9 +33,8 @@ namespace Assbot.Commands
 			{
 				string query = Uri.EscapeUriString(String.Join(" ", args));
 				string uri = String.Format("http://www.youtube.com/results?search_query={0}", query);
+				string body = Utility.GetHtml(uri);
 
-				WebClient client = new WebClient { Encoding = Encoding.UTF8 };
-				string body = WebUtility.HtmlDecode(client.DownloadString(uri));
 				string results = body.Split(new[] { "<ol id=\"search-results\" class=\"result-list context-data-container\">" },
 											StringSplitOptions.None)[1];
 				string id = results.Split(new[] { "data-context-item-id=\"" }, StringSplitOptions.None)[1]
