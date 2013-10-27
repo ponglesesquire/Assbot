@@ -18,7 +18,7 @@ namespace Assbot.Commands
 		public Lucky(Bot parent)
 			: base(parent)
 		{
-
+			// Restaging the cheap way
 		}
 
 		public override void HandleDirect(List<string> args, string username)

@@ -13,7 +13,7 @@ namespace Assbot.Commands
 		public UrlTitle(Bot parent)
 			: base(parent)
 		{
-
+			// Restaging the cheap way
 		}
 
 		public override void HandlePassive(string message, string username)
