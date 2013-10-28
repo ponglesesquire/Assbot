@@ -29,7 +29,7 @@ namespace Assbot
 
 					if (!bot.JoinChannel(Configuration.Channel))
 					{
-						Console.WriteLine("Cannot join channele {0}!", Configuration.Channel);
+						Console.WriteLine("Cannot join channel {0}!", Configuration.Channel);
 						Console.ReadKey();
 						return;
 					}

@@ -51,6 +51,8 @@ namespace Assbot
 			client.Connected += (sender, args) => Console.WriteLine("Connected!");
 			client.Disconnected += (sender, args) =>
 			{
+				Console.WriteLine("Lost connection, reconnecting...");
+
 				// Reconnect
 				Connect(Configuration.Server);
 				JoinChannel(Configuration.Channel);
