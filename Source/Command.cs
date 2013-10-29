@@ -22,17 +22,22 @@ namespace Assbot
 			Parent = parent;
 		}
 
+		public virtual void Initialize()
+		{
+
+		}
+
+		public virtual void Shutdown()
+		{
+
+		}
+
 		public virtual void HandleDirect(List<string> args, string username)
 		{
 
 		}
 
 		public virtual void HandlePassive(string message, string username)
-		{
-			
-		}
-
-		public virtual void Shutdown()
 		{
 			
 		}

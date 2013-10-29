@@ -10,18 +10,14 @@ namespace Assbot
 {
 	public class Bot
 	{
-		public bool IsRunning
-		{
-			get
-			{
-				return client.IsConnected;
-			}
-		}
-
+		public bool IsRunning { get; private set; }
 		public bool IsInChannel { get; private set; }
 		public bool IsIdentified { get; private set; }
 
 		private readonly IrcClient client;
+		private readonly ManualResetEventSlim connectedEvent;
+		private readonly List<Command> commands;
+
 		private static IrcUserRegistrationInfo RegistrationInfo
 		{
 			get
@@ -35,25 +31,78 @@ namespace Assbot
 			}
 		}
 
-		private readonly List<Command> commands; 
+		// TODO Terrible hack
+		private static readonly object CommonLock;
+
+		static Bot()
+		{
+			CommonLock = new object();
+		}
 
 		public Bot()
 		{
 			commands = Command.GetCommands(this);
 			IsInChannel = false;
 			IsIdentified = false;
+			IsRunning = true;
+
+			// Initialize commands
+			foreach(Command command in commands)
+				command.Initialize();
 
 			client = new IrcClient
 			{
 				FloodPreventer = new IrcStandardFloodPreventer(4, 2000)
 			};
 
+			// TODO Nasty...
+			connectedEvent = new ManualResetEventSlim(false);
+			client.Connected += (sender, e) => connectedEvent.Set();
+
 			client.Connected += (sender, args) => Console.WriteLine("Connected!");
 			client.Disconnected += (sender, args) =>
 			{
+				const int MaxRetries = 16;
+				int tries = 0;
+
+				if (!IsRunning)
+				{
+					Console.WriteLine("Disconnected and IsRunning == false, assuming graceful shutdown...");
+					return;
+				}
+
+				IsInChannel = false;
+				IsIdentified = false;
+
+				// Wait a little so the server doesn't block us from rejoining (flood control)
+				Console.WriteLine("Lost connection, attempting to reconnect in 6 seconds...");
+				Thread.Sleep(6000);
+
 				// Reconnect
-				Connect(Configuration.Server);
-				JoinChannel(Configuration.Channel);
+				Console.Write("Reconnecting... ");
+				while (!Connect(Configuration.Server) && tries++ < MaxRetries)
+				{
+					Console.Write("\rReconnecting, attempt {0}...", tries);
+					Thread.Sleep(1);
+				}
+
+				if (tries == MaxRetries)
+				{
+					Console.WriteLine("Failed.");
+					Quit("Failed to reconnect.");
+					return;
+				}
+				
+				Console.WriteLine("Connected");
+				Console.Write("Joining channel... ");
+
+				if (JoinChannel(Configuration.Channel))
+					Console.WriteLine("Success");
+				else
+				{
+					Console.WriteLine("Failed");
+					Quit("Failed to rejoin channel.");
+				}
 			};
 
 			client.Registered += (sender, args) =>
@@ -101,14 +150,32 @@ namespace Assbot
 					IsInChannel = true;
 				};
 
+				localClient.LocalUser.LeftChannel += (o, eventArgs) =>
+				{
+					Console.Write("Rejoining channel... ");
+					if (JoinChannel(Configuration.Channel))
+						Console.WriteLine("Success");
+					else
+					{
+						Console.WriteLine("Failed");
+						Quit("Failed to rejoin channel.");
+					}
+				};
+
 				Console.WriteLine("Registered!");
+			};
+
+			client.Error += (sender, args) =>
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine("IRC Error {0}", args.Error.Message);
+				Console.ForegroundColor = ConsoleColor.Gray;
 			};
 		}
 
 		public bool Connect(string server)
 		{
-			ManualResetEventSlim connectedEvent = new ManualResetEventSlim(false);
-			client.Connected += (sender, e) => connectedEvent.Set();
+			connectedEvent.Reset();
 			client.Connect(server, false, RegistrationInfo);
 
 			return connectedEvent.Wait(10000);
@@ -132,20 +199,30 @@ namespace Assbot
 
 		public void Quit(string message)
 		{
-			Shutdown();
-
 			SendChannelMessage(message);
 			client.Channels.Leave(Configuration.Channel, "Leaving");
 			client.Quit();
+
+			// Give the thread a little bit of time to process the exit
+			Thread.Sleep(500);
+
+			Shutdown();
 		}
 
 		public void Shutdown()
 		{
-			foreach (Command command in commands)
-				command.Shutdown();
+			// Lock to prevent cross-thread shutdown resource contention
+			lock (CommonLock)
+			{
+				Console.WriteLine("Shutting down...");
 
-			// We do this so it's impossible to accidentally shutdown commands more than once
-			commands.Clear();
+				IsRunning = false;
+				foreach(Command command in commands)
+					command.Shutdown();
+
+				// We do this so it's impossible to accidentally shutdown commands more than once
+				commands.Clear();
+			}
 		}
 
 		private void HandleMessage(object sender, IrcMessageEventArgs e)
@@ -182,6 +259,29 @@ namespace Assbot
 			{
 				Console.WriteLine(e);
 			}
+		}
+
+		public bool IsUserRegistered(string username)
+		{
+			bool isRegistered = false;
+			bool recieved = false;
+
+			// TODO This subscribes multiple anonymous delegates to the same event
+			//      to be honest nothing about this is safe...
+			client.LocalUser.NoticeReceived += (sender, args) =>
+			{
+				isRegistered = args.Text.Split(new[] { ' ' })[2] == "3";
+				recieved = true;
+			};
+
+			client.SendRawMessage(String.Format("ns status {0}", username));
+
+			Stopwatch timer = new Stopwatch();
+			timer.Start();
+			while(timer.ElapsedMilliseconds < 150 && !recieved)
+				Thread.Sleep(1);
+
+			return isRegistered;
 		}
 	}
 }

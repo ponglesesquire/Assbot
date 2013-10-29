@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Assbot.Commands
 {
@@ -26,7 +27,7 @@ namespace Assbot.Commands
 
 		public override void HandleDirect(List<string> args, string username)
 		{
-			if (!Operators.Contains(username))
+			if (!Operators.Contains(username) && !Parent.IsUserRegistered(username))
 			{
 				Parent.SendChannelMessage("YOU'RE NOT THE BOSS OF ME! >:C");
 				return;

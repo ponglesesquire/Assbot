@@ -25,16 +25,35 @@ namespace Assbot.Commands
 			: base(parent)
 		{
 			lastSeenRecords = new Dictionary<string, LastSeenRecord>();
+		}
 
+		public override void Initialize()
+		{
 			try
 			{
 				LoadHistory();
 			}
-			catch(IOException)
+			catch (IOException)
 			{
 				Console.WriteLine("Cannot open history file \"{0}\" for reading.", HistoryFilename);
 			}
-			catch(Exception)
+			catch (Exception)
+			{
+				Console.WriteLine("Some unknown error occurred.");
+			}
+		}
+
+		public override void Shutdown()
+		{
+			try
+			{
+				SaveHistory();
+			}
+			catch (IOException)
+			{
+				Console.WriteLine("Cannot open history file \"{0}\" for writing.", HistoryFilename);
+			}
+			catch (Exception)
 			{
 				Console.WriteLine("Some unknown error occurred.");
 			}
@@ -72,22 +91,6 @@ namespace Assbot.Commands
 				lastSeenRecords[username] = record;
 			else
 				lastSeenRecords.Add(username, record);
-		}
-
-		public override void Shutdown()
-		{
-			try
-			{
-				SaveHistory();
-			}
-			catch (IOException)
-			{
-				Console.WriteLine("Cannot open history file \"{0}\" for writing.", HistoryFilename);
-			}
-			catch (Exception)
-			{
-				Console.WriteLine("Some unknown error occurred.");
-			}
 		}
 
 		private void LoadHistory()

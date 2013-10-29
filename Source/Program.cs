@@ -29,13 +29,15 @@ namespace Assbot
 
 					if (!bot.JoinChannel(Configuration.Channel))
 					{
-						Console.WriteLine("Cannot join channele {0}!", Configuration.Channel);
+						Console.WriteLine("Cannot join channel {0}!", Configuration.Channel);
 						Console.ReadKey();
 						return;
 					}
 
 					while(bot.IsRunning)
 						Thread.Sleep(1);
+
+					Console.WriteLine("Graceful shutdown, IsRunning = {0}", bot.IsRunning);
 
 					bot.Shutdown();
 				});
