@@ -62,11 +62,36 @@ namespace Assbot
 			client.Connected += (sender, args) => Console.WriteLine("Connected!");
 			client.Disconnected += (sender, args) =>
 			{
+				const int MaxRetries = 16;
+				int tries = 0;
+
+				IsInChannel = false;
+				IsIdentified = false;
+
 				Console.WriteLine("Lost connection, reconnecting...");
 
 				// Reconnect
-				Connect(Configuration.Server);
-				JoinChannel(Configuration.Channel);
+				Console.Write("Reconnecting... ");
+				while (!Connect(Configuration.Server) && tries++ < MaxRetries)
+					Thread.Sleep(1500);
+
+				if (tries == MaxRetries)
+				{
+					Console.WriteLine("Failed.");
+					Quit("Failed to reconnect.");
+					return;
+				}
+				
+				Console.WriteLine("Connected");
+				Console.Write("Joining channel... ");
+
+				if (JoinChannel(Configuration.Channel))
+					Console.WriteLine("Success");
+				else
+				{
+					Console.WriteLine("Failed");
+					Quit("Failed to rejoin channel.");
+				}
 			};
 
 			client.Registered += (sender, args) =>
@@ -114,6 +139,18 @@ namespace Assbot
 					IsInChannel = true;
 				};
 
+				localClient.LocalUser.LeftChannel += (o, eventArgs) =>
+				{
+					Console.Write("Rejoining channel... ");
+					if (JoinChannel(Configuration.Channel))
+						Console.WriteLine("Success");
+					else
+					{
+						Console.WriteLine("Failed");
+						Quit("Failed to rejoin channel.");
+					}
+				};
+
 				Console.WriteLine("Registered!");
 			};
 		}
@@ -145,15 +182,19 @@ namespace Assbot
 
 		public void Quit(string message)
 		{
-			Shutdown();
-
 			SendChannelMessage(message);
 			client.Channels.Leave(Configuration.Channel, "Leaving");
 			client.Quit();
+
+			// Give the thread a little bit of time to process the exit
+			Thread.Sleep(500);
+
+			Shutdown();
 		}
 
 		public void Shutdown()
 		{
+			// Lock to prevent cross-thread shutdown resource contention
 			lock (CommonLock)
 			{
 				IsRunning = false;
