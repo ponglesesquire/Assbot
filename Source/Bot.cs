@@ -54,6 +54,10 @@ namespace Assbot
 			IsIdentified = false;
 			IsRunning = true;
 
+			// Initialize commands
+			foreach(Command command in commands)
+				command.Initialize();
+
 			client = new IrcClient
 			{
 				FloodPreventer = new IrcStandardFloodPreventer(4, 2000)

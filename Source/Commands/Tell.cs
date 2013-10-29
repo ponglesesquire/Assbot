@@ -25,7 +25,10 @@ namespace Assbot.Commands
 			: base(parent)
 		{
 			tellRecords = new Dictionary<string, List<TellRecord>>();
+		}
 
+		public override void Initialize()
+		{
 			try
 			{
 				LoadHistory();
@@ -33,6 +36,22 @@ namespace Assbot.Commands
 			catch (IOException)
 			{
 				Console.WriteLine("Cannot open history file \"{0}\" for reading.", HistoryFilename);
+			}
+			catch (Exception)
+			{
+				Console.WriteLine("Some unknown error occurred.");
+			}
+		}
+
+		public override void Shutdown()
+		{
+			try
+			{
+				SaveHistory();
+			}
+			catch (IOException)
+			{
+				Console.WriteLine("Cannot open history file \"{0}\" for writing.", HistoryFilename);
 			}
 			catch (Exception)
 			{
@@ -70,22 +89,6 @@ namespace Assbot.Commands
 				Parent.SendChannelMessage("{0}, {1} had a message for you, \"{2}\".", username, record.Username, record.Message);
 
 			tellRecords[username].Clear();
-		}
-
-		public override void Shutdown()
-		{
-			try
-			{
-				SaveHistory();
-			}
-			catch (IOException)
-			{
-				Console.WriteLine("Cannot open history file \"{0}\" for writing.", HistoryFilename);
-			}
-			catch (Exception)
-			{
-				Console.WriteLine("Some unknown error occurred.");
-			}
 		}
 
 		private void LoadHistory()
