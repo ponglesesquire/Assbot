@@ -47,15 +47,15 @@ namespace Assbot
 			StringBuilder builder = new StringBuilder();
 
 			if (timeSpan.Days > 0)
-				builder.AppendFormat("{0} days, ", timeSpan.Days);
+				builder.AppendFormat("{0} {1}, ", timeSpan.Days, timeSpan.Days == 1 ? "day" : "days");
 
 			if (timeSpan.Hours > 0)
-				builder.AppendFormat("{0} hours, ", timeSpan.Hours);
+				builder.AppendFormat("{0} {1}, ", timeSpan.Hours, timeSpan.Days == 1 ? "hour" : "hours");
 
 			if (timeSpan.Minutes > 0)
-				builder.AppendFormat("{0} minutes, ", timeSpan.Minutes);
+				builder.AppendFormat("{0} {1}, ", timeSpan.Minutes, timeSpan.Minutes == 1 ? "minute" : "minutes");
 
-			builder.AppendFormat("{0} seconds", timeSpan.Seconds);
+			builder.AppendFormat("{0} {1}", timeSpan.Seconds, timeSpan.Seconds == 1 ? "second" : "seconds");
 
 			return builder.ToString();
 		}

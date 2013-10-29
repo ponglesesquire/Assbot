@@ -197,6 +197,8 @@ namespace Assbot
 			// Lock to prevent cross-thread shutdown resource contention
 			lock (CommonLock)
 			{
+				Console.WriteLine("Shutting down...");
+
 				IsRunning = false;
 				foreach(Command command in commands)
 					command.Shutdown();
