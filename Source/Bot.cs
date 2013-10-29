@@ -11,19 +11,13 @@ namespace Assbot
 	public class Bot
 	{
 		public bool IsRunning { get; private set; }
-
-		//public bool IsRunning
-		//{
-		//	get
-		//	{
-		//		return client.IsConnected;
-		//	}
-		//}
-
 		public bool IsInChannel { get; private set; }
 		public bool IsIdentified { get; private set; }
 
 		private readonly IrcClient client;
+		private readonly ManualResetEventSlim connectedEvent;
+		private readonly List<Command> commands;
+
 		private static IrcUserRegistrationInfo RegistrationInfo
 		{
 			get
@@ -36,8 +30,6 @@ namespace Assbot
 				};
 			}
 		}
-
-		private readonly List<Command> commands;
 
 		// TODO Terrible hack
 		private static readonly object CommonLock;
@@ -63,21 +55,36 @@ namespace Assbot
 				FloodPreventer = new IrcStandardFloodPreventer(4, 2000)
 			};
 
+			// TODO Nasty...
+			connectedEvent = new ManualResetEventSlim(false);
+			client.Connected += (sender, e) => connectedEvent.Set();
+
 			client.Connected += (sender, args) => Console.WriteLine("Connected!");
 			client.Disconnected += (sender, args) =>
 			{
 				const int MaxRetries = 16;
 				int tries = 0;
 
+				if (!IsRunning)
+				{
+					Console.WriteLine("Disconnected and IsRunning == false, assuming graceful shutdown...");
+					return;
+				}
+
 				IsInChannel = false;
 				IsIdentified = false;
 
-				Console.WriteLine("Lost connection, reconnecting...");
+				// Wait a little so the server doesn't block us from rejoining (flood control)
+				Console.WriteLine("Lost connection, attempting to reconnect in 6 seconds...");
+				Thread.Sleep(6000);
 
 				// Reconnect
 				Console.Write("Reconnecting... ");
 				while (!Connect(Configuration.Server) && tries++ < MaxRetries)
-					Thread.Sleep(1500);
+				{
+					Console.Write("\rReconnecting, attempt {0}...", tries);
+					Thread.Sleep(1);
+				}
 
 				if (tries == MaxRetries)
 				{
@@ -157,12 +164,18 @@ namespace Assbot
 
 				Console.WriteLine("Registered!");
 			};
+
+			client.Error += (sender, args) =>
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine("IRC Error {0}", args.Error.Message);
+				Console.ForegroundColor = ConsoleColor.Gray;
+			};
 		}
 
 		public bool Connect(string server)
 		{
-			ManualResetEventSlim connectedEvent = new ManualResetEventSlim(false);
-			client.Connected += (sender, e) => connectedEvent.Set();
+			connectedEvent.Reset();
 			client.Connect(server, false, RegistrationInfo);
 
 			return connectedEvent.Wait(10000);
