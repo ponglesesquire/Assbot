@@ -37,6 +37,8 @@ namespace Assbot
 					while(bot.IsRunning)
 						Thread.Sleep(1);
 
+					Console.WriteLine("Graceful shutdown, IsRunning = {0}", bot.IsRunning);
+
 					bot.Shutdown();
 				});
 

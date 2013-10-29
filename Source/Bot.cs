@@ -10,13 +10,15 @@ namespace Assbot
 {
 	public class Bot
 	{
-		public bool IsRunning
-		{
-			get
-			{
-				return client.IsConnected;
-			}
-		}
+		public bool IsRunning { get; private set; }
+
+		//public bool IsRunning
+		//{
+		//	get
+		//	{
+		//		return client.IsConnected;
+		//	}
+		//}
 
 		public bool IsInChannel { get; private set; }
 		public bool IsIdentified { get; private set; }
@@ -35,13 +37,22 @@ namespace Assbot
 			}
 		}
 
-		private readonly List<Command> commands; 
+		private readonly List<Command> commands;
+
+		// TODO Terrible hack
+		private static readonly object CommonLock;
+
+		static Bot()
+		{
+			CommonLock = new object();
+		}
 
 		public Bot()
 		{
 			commands = Command.GetCommands(this);
 			IsInChannel = false;
 			IsIdentified = false;
+			IsRunning = true;
 
 			client = new IrcClient
 			{
@@ -143,11 +154,15 @@ namespace Assbot
 
 		public void Shutdown()
 		{
-			foreach (Command command in commands)
-				command.Shutdown();
+			lock (CommonLock)
+			{
+				IsRunning = false;
+				foreach(Command command in commands)
+					command.Shutdown();
 
-			// We do this so it's impossible to accidentally shutdown commands more than once
-			commands.Clear();
+				// We do this so it's impossible to accidentally shutdown commands more than once
+				commands.Clear();
+			}
 		}
 
 		private void HandleMessage(object sender, IrcMessageEventArgs e)
@@ -184,6 +199,29 @@ namespace Assbot
 			{
 				Console.WriteLine(e);
 			}
+		}
+
+		public bool IsUserRegistered(string username)
+		{
+			bool isRegistered = false;
+			bool recieved = false;
+
+			// TODO This subscribes multiple anonymous delegates to the same event
+			//      to be honest nothing about this is safe...
+			client.LocalUser.NoticeReceived += (sender, args) =>
+			{
+				isRegistered = args.Text.Split(new[] { ' ' })[2] == "3";
+				recieved = true;
+			};
+
+			client.SendRawMessage(String.Format("ns status {0}", username));
+
+			Stopwatch timer = new Stopwatch();
+			timer.Start();
+			while(timer.ElapsedMilliseconds < 150 && !recieved)
+				Thread.Sleep(1);
+
+			return isRegistered;
 		}
 	}
 }
