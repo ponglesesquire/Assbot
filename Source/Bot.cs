@@ -76,6 +76,7 @@ namespace Assbot
 
 				// Wait a little so the server doesn't block us from rejoining (flood control)
 				Console.WriteLine("Lost connection, attempting to reconnect in 6 seconds...");
+                client.Disconnect();
 				Thread.Sleep(6000);
 
 				// Reconnect
@@ -228,6 +229,9 @@ namespace Assbot
 		private void HandleMessage(object sender, IrcMessageEventArgs e)
 		{
 			string message = Regex.Replace(e.Text, @"[^\u0020-\u007F]", String.Empty);
+
+            if (message.Length == 0)
+                return;
 
 			// Direct commands
 			if (message.First() == Configuration.CommandDelimiter)

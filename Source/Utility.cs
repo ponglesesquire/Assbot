@@ -53,9 +53,9 @@ namespace Assbot
 				builder.AppendFormat("{0} {1}, ", timeSpan.Hours, timeSpan.Days == 1 ? "hour" : "hours");
 
 			if (timeSpan.Minutes > 0)
-				builder.AppendFormat("{0} {1}, ", timeSpan.Minutes, timeSpan.Minutes == 1 ? "minute" : "minutes");
-
-			builder.AppendFormat("{0} {1}", timeSpan.Seconds, timeSpan.Seconds == 1 ? "second" : "seconds");
+				builder.AppendFormat("{0} {1}", timeSpan.Minutes, timeSpan.Minutes == 1 ? "minute" : "minutes");
+            else
+			    builder.AppendFormat("{0} {1}", timeSpan.Seconds, timeSpan.Seconds == 1 ? "second" : "seconds");
 
 			return builder.ToString();
 		}

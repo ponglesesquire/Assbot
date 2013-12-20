@@ -54,6 +54,7 @@ namespace Assbot.Commands
 				}
 			});
 
+            ytThread.Name = "YouTube Thread";
 			ytThread.Start();
 		}
 	}

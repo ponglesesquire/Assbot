@@ -39,9 +39,10 @@
   <ItemGroup>
     <Compile Include="Bot.cs" />
     <Compile Include="Command.cs" />
-    <Compile Include="Commands\Google.cs" />
     <Compile Include="Commands\Help.cs" />
+    <Compile Include="Commands\Lucky.cs" />
     <Compile Include="Commands\Quit.cs" />
+    <Compile Include="Commands\s.cs" />
     <Compile Include="Commands\Seen.cs" />
     <Compile Include="Commands\Source.cs" />
     <Compile Include="Commands\Tell.cs" />
